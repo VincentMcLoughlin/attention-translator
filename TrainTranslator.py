@@ -38,8 +38,8 @@ class TrainTranslator(tf.keras.Model):
             #Only works if encoder and decoder have same number of units            
             dec_state = enc_state
             loss = tf.constant(0.0)
-
-            for t in tf.range(max_target_length-1):
+            print(f"tf range is {tf.range(max_target_length-1)}")
+            for t in tf.range(max_target_length-1):            
                 #Pass in two tokens from target sequence
                 # 1. The current input to the decoder
                 # 2. The target for the decoder's next prediction

@@ -52,7 +52,7 @@ def create_text_processors(dataset):
     return input_text_processor, output_text_processor
 
 dataset = Dataset()
-dataset.create_dataset()
+training_data, inp_data, targ_data = dataset.create_dataset()
 input_text_processor, output_text_processor = create_text_processors(dataset)
 
 print("getting example_input_batch")
@@ -160,22 +160,25 @@ sampled_token = tf.random.categorical(dec_result.logits[:, 0, :], num_samples=1)
 first_word = vocab[sampled_token.numpy()]
 first_word[:5]
 
-translator = TrainTranslator(embedding_dim, units, 
+train_translator = TrainTranslator(embedding_dim, units, 
                     input_text_processor=input_text_processor,
-                    output_text_processor=output_text_processor,
-                    use_tf_function=False)
+                    output_text_processor=output_text_processor)
 
-translator.compile(optimizer = tf.optimizers.Adam(), loss=MaskedLoss())
+train_translator.compile(optimizer = tf.optimizers.Adam(), loss=MaskedLoss())
 np.log(output_text_processor.vocabulary_size())
 
 #train without tf function
-# start_time = time.time()
-# for n in range(10):
-#   print(translator.train_step([example_input_batch, example_target_batch]))
-# print()
-# end_time = time.time()
-# elapsed = end_time - start_time
-# print(f"Elapsed Time: {elapsed}")
+print(f"example_input_batch shape {example_input_batch.shape}")
+print(f"target_batch_shape {example_target_batch.shape}")
+#print(f"tf_dataset shape {dataset.tf_dataset.shape}")
+#print(f"training data shape {training_data.shape}")
+start_time = time.time()
+for n in range(10):
+  print(train_translator.train_step([example_input_batch, example_target_batch]))
+print()
+end_time = time.time()
+elapsed = end_time - start_time
+print(f"Elapsed Time: {elapsed}")
 
 # translator.use_tf_function = True
 # #train with tf function
@@ -202,8 +205,7 @@ np.log(output_text_processor.vocabulary_size())
 # plt.show()
 
 batch_loss = BatchLogs('batch_loss')
-
-train_translator.fit(dataset, epochs=3, callbacks=[batch_loss])
+train_translator.fit(training_data, epochs=3, callbacks=[batch_loss])
 
 plt.plot(batch_loss.logs)
 plt.ylim([0, 3])
