@@ -30,13 +30,13 @@ class Dataset():
 
         return inp, targ
 
-    def create_dataset(self, download=False):
+    def create_dataset(self, file_path, download=False):
 
         if download == True:
             path_to_zip = tf.keras.utils.get_file('spa-eng.zip', origin='http://storage.googleapis.com/download.tensorflow.org/data/spa-eng.zip', extract=True)            
             path_to_file = pathlib.Path(path_to_zip).parent/'spa-eng/spa.txt'
 
-        path_to_file = pathlib.Path('spa-eng/spa.txt')
+        path_to_file = pathlib.Path(file_path)
 
         self.input, self.target = self.load_data(path_to_file)
         print(self.input[1])

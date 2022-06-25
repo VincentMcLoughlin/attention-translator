@@ -28,9 +28,8 @@ def tf_lower_and_split_punctuation(text):
     text = tf.strings.join(['[START]', text, '[END]'], separator=' ')
     return text
 
-def vectorize_text(input):
-
-    max_vocab_size = 5000
+def vectorize_text(input, max_vocab_size):
+    
     text_processor = tf.keras.layers.TextVectorization(
     standardize=tf_lower_and_split_punctuation, max_tokens=max_vocab_size)
 

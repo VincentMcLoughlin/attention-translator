@@ -22,13 +22,11 @@ class Decoder(tf.keras.layers.Layer):
         self.embedding_dim = embedding_dim
 
         #Step 1: embedding layer converts token IDs to vectors
-
         self.embedding = tf.keras.layers.Embedding(self.output_vocab_size, embedding_dim)
 
         #Step 2: RNN Keeps track of previously generated text
         self.gru = tf.keras.layers.GRU(self.dec_units, return_sequences=True, return_state=True, 
-                    recurrent_initializer='glorot_uniform')
-
+                    recurrent_initializer='glorot_uniform')        
         
         #Step 3: RNN output will be query for the attention layer
         self.attention = Attention(self.dec_units)
@@ -55,6 +53,9 @@ class Decoder(tf.keras.layers.Layer):
 
         #Step 2: Process one step with the RNN
         rnn_output, state = self.gru(vectors, initial_state=state)
+        rnn_output, state = self.gru(rnn_output, initial_state=state)
+        rnn_output, state = self.gru(rnn_output, initial_state=state)
+        rnn_output, state = self.gru(rnn_output, initial_state=state)
 
         shape_checker(rnn_output, ('batch', 't', 'dec_units'))
         shape_checker(state, ('batch', 'dec_units'))

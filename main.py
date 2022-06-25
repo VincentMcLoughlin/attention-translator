@@ -17,18 +17,23 @@ import pickle
 from TrainTranslator import TrainTranslator
 from MaskedLoss import MaskedLoss
 from BatchLogs import BatchLogs
+from Translator import Translator
 import time
 
 new_data = True
-embedding_dim = 256
-units = 1024
-
-def create_text_processors(dataset):        
+embedding_dim = 1000
+units = 1000
+max_vocab_size = 50000
+batch_size = 128
+learning_rate = 1e-3
+num_epochs = 4
+#learning_rate = 0.01
+def create_text_processors(dataset, use_russian=False):        
     print("getting input")
     input_path = "input_text_processor.pkl"
 
     if new_data:
-        input_text_processor = vectorize_text(dataset.input)    
+        input_text_processor = vectorize_text(dataset.input, max_vocab_size)    
         save_processor(input_text_processor, input_path)
         print(input_text_processor.get_vocabulary()[:10])
     else:
@@ -41,7 +46,7 @@ def create_text_processors(dataset):
     output_path = "output_text_processor.pkl"
 
     if new_data:
-        output_text_processor = vectorize_text(dataset.target)    
+        output_text_processor = vectorize_text(dataset.target, max_vocab_size)    
         save_processor(output_text_processor, output_path)
         print(output_text_processor.get_vocabulary()[:10])
     else:
@@ -51,9 +56,14 @@ def create_text_processors(dataset):
     print ("*"*10)
     return input_text_processor, output_text_processor
 
+spanish_path = 'spa-eng/spa.txt'
+russian_path = 'rus-eng/rus.txt'
+german_path = 'deu-eng/deu_train.txt'
+german_val_path = 'deu-eng/deu_val.txt'
 dataset = Dataset()
-training_data, inp_data, targ_data = dataset.create_dataset()
-input_text_processor, output_text_processor = create_text_processors(dataset)
+training_data, inp_data, targ_data = dataset.create_dataset(german_path)
+val_data, val_inp_data, val_targ_data = dataset.create_dataset(german_val_path)
+input_text_processor, output_text_processor = create_text_processors(dataset, use_russian=True)
 
 print("getting example_input_batch")
 for example_input_batch, example_target_batch in dataset.tf_dataset.take(1):
@@ -73,53 +83,19 @@ print(f'Input batch tokens, shape (batch, s): {example_tokens.shape}')
 print(f'Encoder output, shape (batch, s, units): {example_enc_output.shape}')
 print(f'Encoder state, shape (batch, units): {example_enc_state.shape}')
 
-attention_layer = Attention(units)
-print((example_tokens != 0).shape)
+# attention_layer = Attention(units)
+# print((example_tokens != 0).shape)
 
-example_attention_query = tf.random.normal(shape=[len(example_tokens), 2, 10])
+# example_attention_query = tf.random.normal(shape=[len(example_tokens), 2, 10])
 
-context_vector, attention_weights = attention_layer(
-    query=example_attention_query,
-    value=example_enc_output,
-    mask=(example_tokens != 0))
+# context_vector, attention_weights = attention_layer(
+#     query=example_attention_query,
+#     value=example_enc_output,
+#     mask=(example_tokens != 0))
 
-print(f'Attention result shape: (batch_size, query_seq_length, units):           {context_vector.shape}')
-print(f'Attention weights shape: (batch_size, query_seq_length, value_seq_length): {attention_weights.shape}')
+# print(f'Attention result shape: (batch_size, query_seq_length, units):           {context_vector.shape}')
+# print(f'Attention weights shape: (batch_size, query_seq_length, value_seq_length): {attention_weights.shape}')
 
-# plt.subplot(1, 2, 1)
-# plt.pcolormesh(attention_weights[:, 0, :])
-# plt.title('Attention weights')
-
-# plt.subplot(1, 2, 2)
-# plt.pcolormesh(example_tokens != 0)
-# plt.title('Mask')
-
-print(attention_weights.shape)
-
-# attention_slice = attention_weights[0, 0].numpy()
-# attention_slice = attention_slice[attention_slice != 0]
-
-# plt.suptitle('Attention weights for one sequence')
-
-# plt.figure(figsize=(12, 6))
-# a1 = plt.subplot(1, 2, 1)
-# plt.bar(range(len(attention_slice)), attention_slice)
-# # freeze the xlim
-# plt.xlim(plt.xlim())
-# plt.xlabel('Attention weights')
-
-# a2 = plt.subplot(1, 2, 2)
-# plt.bar(range(len(attention_slice)), attention_slice)
-# plt.xlabel('Attention weights, zoomed')
-
-# # zoom in
-# top = max(a1.get_ylim())
-# zoom = 0.85*top
-# a2.set_ylim([0.90*top, top])
-# a1.plot(a1.get_xlim(), [zoom, zoom], color='k')
-# plt.show()
-# from Decoder import call
-# Decoder.call = call
 decoder = Decoder(output_text_processor.vocabulary_size(),
                   embedding_dim, units)
 
@@ -162,9 +138,9 @@ first_word[:5]
 
 train_translator = TrainTranslator(embedding_dim, units, 
                     input_text_processor=input_text_processor,
-                    output_text_processor=output_text_processor)
+                    output_text_processor=output_text_processor, use_tf_function=True)
 
-train_translator.compile(optimizer = tf.optimizers.Adam(), loss=MaskedLoss())
+train_translator.compile(optimizer = tf.optimizers.Adam(learning_rate=learning_rate), loss=MaskedLoss())
 np.log(output_text_processor.vocabulary_size())
 
 #train without tf function
@@ -180,35 +156,31 @@ end_time = time.time()
 elapsed = end_time - start_time
 print(f"Elapsed Time: {elapsed}")
 
-# translator.use_tf_function = True
-# #train with tf function
-# start_time = time.time()
-# for n in range(10):
-#   print(translator.train_step([example_input_batch, example_target_batch]))
-# print()
-# end_time = time.time()
-# elapsed = end_time - start_time
-# print(f"Elapsed Time: {elapsed}")
-
-# losses = []
-# start_time = time.time()
-# for n in range(100):
-#   print('.', end='')
-#   logs = translator.train_step([example_input_batch, example_target_batch])
-#   losses.append(logs['batch_loss'].numpy())
-
-# print()
-# end_time = time.time()
-# elapsed = end_time - start_time
-# print(f"Elapsed Time: {elapsed}")
-# plt.plot(losses)
-# plt.show()
-
 batch_loss = BatchLogs('batch_loss')
-train_translator.fit(training_data, epochs=3, callbacks=[batch_loss])
+#train_translator.fit(training_data, validation_data = val_data, epochs=num_epochs, callbacks=[batch_loss], batch_size=batch_size)
+train_translator.fit(training_data, epochs=num_epochs, callbacks=[batch_loss], batch_size=batch_size)
+                   
+translator = Translator(
+    encoder=train_translator.encoder,
+    decoder=train_translator.decoder,
+    input_text_processor=input_text_processor,
+    output_text_processor=output_text_processor,
+)
+
+tf.saved_model.save(translator, 'translator',
+                    signatures={'serving_default': translator.tf_translate})
 
 plt.plot(batch_loss.logs)
 plt.ylim([0, 3])
 plt.xlabel('Batch #')
-plt.ylabel('CE/token')
+plt.ylabel('Cross Entropy Loss')
 plt.show()
+
+print(f"model history is \n {train_translator.history}")
+
+print(f"translator history is \n {translator.history}")
+
+print("TRAINER SUMMARY")
+train_translator.summary()
+print("TRANSLATOR SUMMARY")
+translator.summary()

@@ -19,7 +19,7 @@ class Encoder(tf.keras.layers.Layer):
         self.embedding = tf.keras.layers.Embedding(self.input_vocab_size, embedding_dim)
 
         #GRU RNN layers processes those vectors sequentially
-        self.gru = tf.keras.layers.GRU(self.enc_units, return_sequences=True, return_state=True, recurrent_initializer='glorot_uniform')
+        self.gru = tf.keras.layers.GRU(self.enc_units, return_sequences=True, return_state=True, recurrent_initializer='glorot_uniform')          
 
     def call(self, tokens, state=None):
         shape_checker = ShapeChecker()
@@ -32,8 +32,11 @@ class Encoder(tf.keras.layers.Layer):
         #3. Gru processes the embedding sequence
         # output shape: (batch, s, enc_units)
         # state shape: (batch, enc_units)
-
         output, state = self.gru(vectors, initial_state=state)
+        output, state = self.gru(output, initial_state=state)
+        output, state = self.gru(output, initial_state=state)
+        output, state = self.gru(output, initial_state=state)
+
         shape_checker(output, ('batch', 's', 'enc_units'))
         shape_checker(state, ('batch','enc_units'))
 
