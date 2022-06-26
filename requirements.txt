@@ -3,10 +3,6 @@ tensorflow-text==2.8.2
 protobuf==3.20.1
 matplotlib==3.5.2
 regex==2022.6.2
+numpy==1.22.4
 pathlib
-random
-csv
-numpy
 typing
-sys
-unittest
