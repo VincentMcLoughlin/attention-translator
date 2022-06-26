@@ -1,7 +1,6 @@
 from unittest import result
 import tensorflow as tf
 import numpy as np
-from ShapeChecker import ShapeChecker
 from Decoder import Decoder, DecoderInput
 
 class Translator(tf.Module):
@@ -32,39 +31,23 @@ class Translator(tf.Module):
         self.start_token = index_from_string(tf.constant('[START]'))
         self.end_token = index_from_string(tf.constant('[END]'))
 
-    def tokens_to_text(self, result_tokens):
-        shape_checker = ShapeChecker()
+    def tokens_to_text(self, result_tokens):        
+        
+        result_text_tokens = self.output_token_string_from_index(result_tokens)        
+        result_text = tf.strings.reduce_join(result_text_tokens, axis=1, separator=' ')        
 
-        shape_checker(result_tokens, ('batch', 't'))
-        result_text_tokens = self.output_token_string_from_index(result_tokens)
-        shape_checker(result_text_tokens, ('batch', 't'))
-
-        result_text = tf.strings.reduce_join(result_text_tokens, axis=1, separator=' ')
-        shape_checker(result_text, ('batch'))
-
-        result_text = tf.strings.strip(result_text)
-        shape_checker(result_text, ('batch',))
+        result_text = tf.strings.strip(result_text)        
         return result_text
 
     def sample(self, logits, temperature):
-        shape_checker = ShapeChecker()
-
-        #t usually 1 here 
-        shape_checker(logits, ('batch', 't', 'vocab'))
-        shape_checker(self.token_mask, ('vocab',))
-
-        token_mask = self.token_mask[tf.newaxis, tf.newaxis, :]
-        shape_checker(token_mask, ('batch', 't', 'vocab'), broadcast=True)
-
+        
         logits = tf.where(self.token_mask, -np.inf, logits)
 
         if temperature == 0.0:
             new_tokens= tf.argmax(logits, axis=1)
         else:
             logits = tf.squeeze(logits, axis=1)
-            new_tokens = tf.random.categorical(logits/temperature, num_samples=1)
-
-        shape_checker(new_tokens, ('batch', 't'))
+            new_tokens = tf.random.categorical(logits/temperature, num_samples=1)        
 
         return new_tokens
 

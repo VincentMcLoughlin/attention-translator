@@ -1,13 +1,11 @@
 import tensorflow as tf
 from attention import Attention
-from ShapeChecker import ShapeChecker
 import typing
-
 from typing import Tuple
 
 class DecoderInput(typing.NamedTuple):
     new_tokens: typing.Any
-    enc_output: typing.Any
+    encoder_output: typing.Any
     mask: typing.Any 
 
 class DecoderOutput(typing.NamedTuple):
@@ -15,66 +13,50 @@ class DecoderOutput(typing.NamedTuple):
     attention_weights: typing.Any
 
 class Decoder(tf.keras.layers.Layer):
-    def __init__(self, output_vocab_size, embedding_dim, dec_units):
+    def __init__(self, units, output_vocab_size, embedding_size):
         super(Decoder, self).__init__()
-        self.dec_units = dec_units
+        self.units = units
         self.output_vocab_size = output_vocab_size
-        self.embedding_dim = embedding_dim
+        self.embedding_size = embedding_size
 
-        #Step 1: embedding layer converts token IDs to vectors
-        self.embedding = tf.keras.layers.Embedding(self.output_vocab_size, embedding_dim)
+        # embedding layer converts token IDs to vectors
+        self.embedding = tf.keras.layers.Embedding(self.output_vocab_size, embedding_size)
 
-        #Step 2: RNN Keeps track of previously generated text
-        self.gru = tf.keras.layers.GRU(self.dec_units, return_sequences=True, return_state=True, 
-                    recurrent_initializer='glorot_uniform')        
+        #GRU tracks previously generated text
+        self.gru = tf.keras.layers.GRU(self.units, return_sequences=True, return_state=True, recurrent_initializer='glorot_uniform')        
         
-        #Step 3: RNN output will be query for the attention layer
-        self.attention = Attention(self.dec_units)
+        #RNN output is attention input
+        self.attention = Attention(self.units)
 
-        #Step 4: Eqn (3) converting ct to at
-        self.Wc = tf.keras.layers.Dense(dec_units, activation=tf.math.tanh, use_bias=False)
+        #Step 4: Wc converts our context vector ct to our attention vector at
+        self.Wc = tf.keras.layers.Dense(units, activation=tf.math.tanh, use_bias=False)
 
         #Step 5. Fully connected layer produces the logits for each output token
         self.fc = tf.keras.layers.Dense(self.output_vocab_size)
 
     
-    def call(self, inputs: DecoderInput, state=None) -> Tuple[DecoderOutput, tf.Tensor]:
-        shape_checker = ShapeChecker()
-        shape_checker(inputs.new_tokens, ('batch', 't'))
-        shape_checker(inputs.enc_output, ('batch', 's', 'enc_units'))
-        shape_checker(inputs.mask, ('batch', 's'))
+    def call(self, inputs: DecoderInput, state=None) -> Tuple[DecoderOutput, tf.Tensor]:                
 
-        if state is not None:
-            shape_checker(state, ('batch', 'dec_units'))
-
-        #tep 1: Lookup embeddings
+        #Get Embeddings
         vectors = self.embedding(inputs.new_tokens)
-        shape_checker(vectors, ('batch', 't', 'embedding_dim'))
 
         #Step 2: Process one step with the RNN
-        rnn_output, state = self.gru(vectors, initial_state=state)
-        rnn_output, state = self.gru(rnn_output, initial_state=state)
-        rnn_output, state = self.gru(rnn_output, initial_state=state)
-        rnn_output, state = self.gru(rnn_output, initial_state=state)
+        gru_hidden_state_output, gru_state = self.gru(vectors, initial_state=state)
+        #gru_hidden_state_output, state = self.gru(gru_hidden_state_output, initial_state=state) #Uncomment for additional gru layers
+        #gru_hidden_state_output, state = self.gru(gru_hidden_state_output, initial_state=state)
+        #gru_hidden_state_output, state = self.gru(gru_hidden_state_output, initial_state=state)
+        
+        #query is h_t from our equations, encoder_output is our h_s, input it to our attention layer
+        context_vector, attention_weights = self.attention(query=gru_hidden_state_output, value=inputs.encoder_output, mask=inputs.mask)        
 
-        shape_checker(rnn_output, ('batch', 't', 'dec_units'))
-        shape_checker(state, ('batch', 'dec_units'))
+        #c_t;h_t from our paper, concatenating context and rnn output
+        context_and_gru_output = tf.concat([context_vector, gru_hidden_state_output], axis=-1)
+        #context_and_gru_output = gru_hidden_state_output #Uncomment to disable attention
 
-        #Step 3: Use RNN output as query for attetion over the encoder output
-        context_vector, attention_weights = self.attention(query=rnn_output, value=inputs.enc_output, mask=inputs.mask)
-        shape_checker(context_vector, ('batch', 't', 'dec_units'))
-        shape_checker(attention_weights, ('batch', 't', 's'))
-
-        #Step 4: Eqn (3) Join context_vector and rnn_output
-        context_and_rnn_output = tf.concat([context_vector, rnn_output], axis=-1)
-
-        #Step 4: eqn 3 at = tanh(Wc@[ch:ht])
-        attention_vector = self.Wc(context_and_rnn_output)
-        shape_checker(attention_vector, ('batch', 't', 'dec_units'))
-
-        #Step 5 generate logic predictions
-        logits = self.fc(attention_vector)
-        shape_checker(logits, ('batch', 't', 'output_vocab_size'))
+        # Get hidden attentional vector h_t =  tanh(Wc[ch:ht])
+        attention_vector = self.Wc(context_and_gru_output)        
+    
+        logits = self.fc(attention_vector)        
 
         return DecoderOutput(logits, attention_weights), state
 

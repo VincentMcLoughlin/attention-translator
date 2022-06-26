@@ -4,41 +4,35 @@
 #returns the processed sequence to pass to the attnetion head, and the internal state to initialize the decoder
 
 import tensorflow as tf
-from ShapeChecker import ShapeChecker
 
 physical_devices = tf.config.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
 
 class Encoder(tf.keras.layers.Layer):
-    def __init__(self, input_vocab_size, embedding_dim, enc_units):
+    def __init__(self, units, input_vocab_size, embedding_dim):
         super(Encoder, self).__init__()
-        self.enc_units = enc_units
+        self.units = units
         self.input_vocab_size = input_vocab_size
         
-        # The embedding layer converts tokens to vectors
+        # Embedding converts our tokens to vectors
         self.embedding = tf.keras.layers.Embedding(self.input_vocab_size, embedding_dim)
 
-        #GRU RNN layers processes those vectors sequentially
-        self.gru = tf.keras.layers.GRU(self.enc_units, return_sequences=True, return_state=True, recurrent_initializer='glorot_uniform')          
+        #GRU layers process our vectorized tokens
+        self.gru = tf.keras.layers.GRU(self.units, return_sequences=True, return_state=True, recurrent_initializer='glorot_uniform')          
 
-    def call(self, tokens, state=None):
-        shape_checker = ShapeChecker()
-        shape_checker(tokens, ('batch', 's'))
+    def call(self, tokens, state=None):        
 
-        # 2. The embedding layer looks up the embedding for each token
-        vectors = self.embedding(tokens)
-        shape_checker(vectors, ('batch', 's', 'embed_dim'))
+        #The embedding layer looks up the embedding for each token
+        vectors = self.embedding(tokens)        
 
-        #3. Gru processes the embedding sequence
-        # output shape: (batch, s, enc_units)
-        # state shape: (batch, enc_units)
+        #3. Gru processes the embedding sequence        
         output, state = self.gru(vectors, initial_state=state)
-        output, state = self.gru(output, initial_state=state)
-        output, state = self.gru(output, initial_state=state)
-        output, state = self.gru(output, initial_state=state)
+        #output, state = self.gru(output, initial_state=state) #Uncomment for additional GRU layers
+        #output, state = self.gru(output, initial_state=state)
+        #output, state = self.gru(output, initial_state=state)        
 
-        shape_checker(output, ('batch', 's', 'enc_units'))
-        shape_checker(state, ('batch','enc_units'))
+        # Our output will have a shape: (batch, s, enc_units)
+        # Our state will have a shape: (batch, enc_units)
 
         return output, state
 

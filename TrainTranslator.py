@@ -2,7 +2,6 @@ from tkinter import Variable
 import tensorflow as tf
 from Encoder import Encoder
 from Decoder import Decoder, DecoderInput
-from ShapeChecker import ShapeChecker
 
 class TrainTranslator(tf.keras.Model):
 
@@ -10,15 +9,14 @@ class TrainTranslator(tf.keras.Model):
                 output_text_processor, use_tf_function=True):
         super().__init__()
 
-        encoder = Encoder(input_text_processor.vocabulary_size(), embedding_dim, units)
-        decoder = Decoder(output_text_processor.vocabulary_size(), embedding_dim, units)
+        encoder = Encoder(units, input_text_processor.vocabulary_size(), embedding_dim)
+        decoder = Decoder(units, output_text_processor.vocabulary_size(), embedding_dim)
 
         self.encoder = encoder
         self.decoder = decoder
         self.input_text_processor = input_text_processor
         self.output_text_processor = output_text_processor
         self.use_tf_function = use_tf_function
-        self.shape_checker = ShapeChecker()
 
     def _train_step(self, inputs):
         input_text, target_text = inputs
@@ -30,15 +28,12 @@ class TrainTranslator(tf.keras.Model):
         with tf.GradientTape() as tape:
 
             #encode input
-            enc_output, enc_state = self.encoder(input_tokens)
-            self.shape_checker(enc_output, ('batch', 's', 'enc_units'))
-            self.shape_checker(enc_state, ('batch', 'enc_units'))
+            enc_output, enc_state = self.encoder(input_tokens)            
 
             #Initialize decoder state to encoder's final state
             #Only works if encoder and decoder have same number of units            
             dec_state = enc_state
-            loss = tf.constant(0.0)
-            print(f"tf range is {tf.range(max_target_length-1)}")
+            loss = tf.constant(0.0)            
             for t in tf.range(max_target_length-1):            
                 #Pass in two tokens from target sequence
                 # 1. The current input to the decoder
@@ -61,28 +56,17 @@ class TrainTranslator(tf.keras.Model):
 
     def train_step(self, inputs):        
 
-        if self.use_tf_function:
-            return self._tf_train_step(inputs)
-        else:
-            return self._train_step(inputs)
+        return self._tf_train_step(inputs)        
 
-    def _preprocess(self, input_text, target_text):
-        self.shape_checker(input_text, ('batch',))
-        self.shape_checker(input_text, ('batch',))
+    def _preprocess(self, input_text, target_text):        
 
         #Convert the text to token IDs
         input_tokens = self.input_text_processor(input_text)
-        target_tokens = self.output_text_processor(target_text)
-
-        self.shape_checker(input_tokens, ('batch', 's'))
-        self.shape_checker(target_tokens, ('batch','t'))
+        target_tokens = self.output_text_processor(target_text)        
 
         #Convert IDs to masks
-        input_mask = input_tokens != 0
-        self.shape_checker(input_mask, ('batch', 's'))
-
-        target_mask = target_tokens != 0
-        self.shape_checker(target_mask, ('batch', 't'))
+        input_mask = input_tokens != 0        
+        target_mask = target_tokens != 0        
 
         return input_tokens, input_mask, target_tokens, target_mask
 
@@ -91,14 +75,10 @@ class TrainTranslator(tf.keras.Model):
 
         #Run the decoder one step
         decoder_input = DecoderInput(new_tokens=input_token, 
-                                    enc_output=enc_output, 
+                                    encoder_output=enc_output, 
                                     mask=input_mask)
 
-        dec_result, dec_state = self.decoder(decoder_input, state=dec_state)
-
-        self.shape_checker(dec_result.logits, ('batch', 't1', 'logits'))
-        self.shape_checker(dec_result.attention_weights, ('batch', 't1', 's'))
-        self.shape_checker(dec_state, ('batch', 'dec_units'))
+        dec_result, dec_state = self.decoder(decoder_input, state=dec_state)        
 
         y = target_token
         y_pred = dec_result.logits

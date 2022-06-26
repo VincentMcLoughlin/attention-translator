@@ -1,5 +1,4 @@
 import tensorflow as tf
-from ShapeChecker import ShapeChecker
 
 class MaskedLoss(tf.keras.losses.Loss):
 
@@ -7,19 +6,13 @@ class MaskedLoss(tf.keras.losses.Loss):
         self.name = 'masked_loss'
         self.loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
 
-    def __call__(self, y_true, y_pred):
+    def __call__(self, y_true, y_pred):        
 
-        shape_checker = ShapeChecker()
-        shape_checker(y_true, ('batch', 't'))
-        shape_checker(y_pred, ('batch', 't', 'logits'))
+        #Batch loss
+        loss = self.loss(y_true, y_pred)        
 
-        #Loss for each item in batch
-        loss = self.loss(y_true, y_pred)
-        shape_checker(loss, ('batch', 't'))
-
-        #Mask off the losses on padding
-        mask = tf.cast(y_true != 0, tf.float32)
-        shape_checker(mask, ('batch', 't'))
+        #Mask losses on padding where our values are 0
+        mask = tf.cast(y_true != 0, tf.float32)        
         loss *= mask
 
         return tf.reduce_sum(loss)
