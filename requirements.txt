@@ -6,3 +6,4 @@ regex==2022.6.2
 numpy==1.22.4
 pathlib
 typing
+sacrebleu
