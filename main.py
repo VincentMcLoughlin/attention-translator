@@ -15,18 +15,16 @@ max_vocab_size = 50000
 batch_size = 128
 learning_rate = 1e-3
 num_epochs = 10
-#learning_rate = 0.01
+
 def create_text_processors(dataset):        
     print("getting input")    
 
-    input_text_processor = vectorize_text(dataset.input, max_vocab_size)        
-    #print(input_text_processor.get_vocabulary()[:10])    
+    input_text_processor = vectorize_text(dataset.input, max_vocab_size)            
 
     print ("*"*10)
 
     print("getting target")
-    output_text_processor = vectorize_text(dataset.target, max_vocab_size)        
-    #print(output_text_processor.get_vocabulary()[:10])    
+    output_text_processor = vectorize_text(dataset.target, max_vocab_size)            
 
     print ("*"*10)
     return input_text_processor, output_text_processor
@@ -47,7 +45,7 @@ def main():
     #Train translator
     train_translator = TrainTranslator(embedding_dim, units, 
                         input_text_processor=input_text_processor,
-                        output_text_processor=output_text_processor, use_tf_function=True)
+                        output_text_processor=output_text_processor)
 
     train_translator.compile(optimizer = tf.optimizers.Adam(learning_rate=learning_rate), loss=MaskedLoss())    
     batch_loss = BatchLogs('batch_loss')

@@ -6,7 +6,7 @@ import tensorflow_text as tf_text
 import csv
 from sacrebleu.metrics import BLEU
 import re
-
+import sys
 #newstest2014
 #https://nlp.stanford.edu/projects/nmt/
 
@@ -16,21 +16,6 @@ def clean_line(text):
     return_text = return_text.replace('&quot', '')
     return_text = return_text.replace('&apos', '')
     return return_text
-    
-def get_input_data_og(file_path, index=0):
-
-    eng_lines = []
-    deu_lines = []
-    with open(file_path, newline = '',  encoding='utf-8') as file:
-        line_reader = csv.reader(file, delimiter='\t')        
-        for line in line_reader:
-
-            eng_text = clean_line(line[0])
-            deu_text = clean_line(line[1])            
-            eng_lines.append(eng_text)
-            deu_lines.append(deu_text)
-
-    return eng_lines, deu_lines
 
 #newstest2014
 def get_input_data(file_path):
@@ -45,15 +30,16 @@ def get_input_data(file_path):
 
     return lines
 
-translator_path = 'train_split_translators\deu_eng_50k_1k_1layers_10_epochs'
-translator_path = 'train_split_translators\deu_eng_50k_1k_1layers_10_epochs_no_attention'
+use_attention = int(sys.argv[1])
+if use_attention==0:  
+    translator_path = 'train_split_translators\deu_eng_50k_1k_1layers_10_epochs_no_attention'
+else:
+    translator_path = 'train_split_translators\deu_eng_50k_1k_1layers_10_epochs'
 
-reference_output_text, input_text = get_input_data_og('deu-eng/deu_val.txt')
-
-# input_path = 'test_data/newstest2014_deu.txt'
-# reference_path = 'test_data/newstest2014_eng.txt'
-# input_text = get_input_data(input_path)
-# reference_output_text = get_input_data(reference_path)
+input_path = 'test_data/newstest2014_deu.txt'
+reference_path = 'test_data/newstest2014_eng.txt'
+input_text = get_input_data(input_path)
+reference_output_text = get_input_data(reference_path)
 
 reloaded = tf.saved_model.load(translator_path)
 

@@ -20,7 +20,7 @@ class TrainTranslator(tf.keras.Model):
 
         (input_tokens, input_mask, target_tokens, target_mask) = self._preprocess(input_text, target_text)
 
-        max_target_length = tf.shape(target_tokens)[1]
+        target_max_length = tf.shape(target_tokens)[1]
 
         with tf.GradientTape() as tape:
 
@@ -31,7 +31,7 @@ class TrainTranslator(tf.keras.Model):
             dec_state = enc_state
             loss = tf.constant(0.0)
 
-            for t in tf.range(max_target_length-1):            
+            for t in tf.range(target_max_length-1):            
                 #Pass in two tokens from target sequence
                 # 1. The current input to the decoder
                 # 2. The target for the decoder's next prediction
@@ -39,16 +39,15 @@ class TrainTranslator(tf.keras.Model):
                 step_loss, dec_state = self._loop_step(new_tokens, input_mask, enc_output, dec_state)
                 loss = loss+step_loss
 
-            #Average loss over all non padding tokens
-            average_loss = loss/tf.reduce_sum(tf.cast(target_mask, tf.float32))            
+            #Get average loss from non-zero tokens
+            avg_loss = loss/tf.reduce_sum(tf.cast(target_mask, tf.float32))            
 
-        #Optimization we found
+        #Apply optimization
         variables = self.trainable_variables
-        gradients = tape.gradient(average_loss, variables)
+        gradients = tape.gradient(avg_loss, variables)
         self.optimizer.apply_gradients(zip(gradients, variables))
-
-        #Return dict mapping metric names to current value
-        return {'batch_loss': average_loss}
+        
+        return {'batch_loss': avg_loss}
 
     def train_step(self, inputs):        
 
