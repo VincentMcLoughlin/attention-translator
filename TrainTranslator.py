@@ -1,12 +1,10 @@
-from tkinter import Variable
 import tensorflow as tf
 from Encoder import Encoder
 from Decoder import Decoder, DecoderInput
 
 class TrainTranslator(tf.keras.Model):
 
-    def __init__(self, embedding_dim, units, input_text_processor, 
-                output_text_processor, use_tf_function=True):
+    def __init__(self, embedding_dim, units, input_text_processor, output_text_processor):
         super().__init__()
 
         encoder = Encoder(units, input_text_processor.vocabulary_size(), embedding_dim)
@@ -15,8 +13,7 @@ class TrainTranslator(tf.keras.Model):
         self.encoder = encoder
         self.decoder = decoder
         self.input_text_processor = input_text_processor
-        self.output_text_processor = output_text_processor
-        self.use_tf_function = use_tf_function
+        self.output_text_processor = output_text_processor        
 
     def _train_step(self, inputs):
         input_text, target_text = inputs
@@ -27,13 +24,13 @@ class TrainTranslator(tf.keras.Model):
 
         with tf.GradientTape() as tape:
 
-            #encode input
+            #encode input, enc_state is passed to decoder
             enc_output, enc_state = self.encoder(input_tokens)            
 
-            #Initialize decoder state to encoder's final state
-            #Only works if encoder and decoder have same number of units            
+            #Initialize decoder state to encoder's final state            
             dec_state = enc_state
-            loss = tf.constant(0.0)            
+            loss = tf.constant(0.0)
+
             for t in tf.range(max_target_length-1):            
                 #Pass in two tokens from target sequence
                 # 1. The current input to the decoder
@@ -46,7 +43,7 @@ class TrainTranslator(tf.keras.Model):
             #Average loss over all non padding tokens
             average_loss = loss/tf.reduce_sum(tf.cast(target_mask, tf.float32))            
 
-        #Apply  optimization step
+        #Optimization we found
         variables = self.trainable_variables
         gradients = tape.gradient(average_loss, variables)
         self.optimizer.apply_gradients(zip(gradients, variables))
@@ -60,7 +57,7 @@ class TrainTranslator(tf.keras.Model):
 
     def _preprocess(self, input_text, target_text):        
 
-        #Convert the text to token IDs
+        #Convert the text to tokens
         input_tokens = self.input_text_processor(input_text)
         target_tokens = self.output_text_processor(target_text)        
 

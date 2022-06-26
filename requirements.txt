@@ -1,5 +1,12 @@
-pip install tensorflow==2.8.0
-pip install "tensorflow-text==2.8.*"
-pip install protobuf==3.20.*
-pip install matplotlib
-tf.config.list_physical_devices('GPU')
+tensorflow==2.8.0
+tensorflow-text==2.8.2
+protobuf==3.20.1
+matplotlib==3.5.2
+regex==2022.6.2
+pathlib
+random
+csv
+numpy
+typing
+sys
+unittest

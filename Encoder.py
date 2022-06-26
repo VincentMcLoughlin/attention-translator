@@ -1,12 +1,4 @@
-#Encoder takes a list of token IDs from input_text_processor
-#Looks up embedding vector for each token using layers.Embedding
-#Processes the embeddings into a new sequence using layers.GRU
-#returns the processed sequence to pass to the attnetion head, and the internal state to initialize the decoder
-
 import tensorflow as tf
-
-physical_devices = tf.config.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
 
 class Encoder(tf.keras.layers.Layer):
     def __init__(self, units, input_vocab_size, embedding_dim):

@@ -1,5 +1,3 @@
-
-#from test_translator import clean_line, get_input_data_og
 import random
 import csv
 import numpy as np

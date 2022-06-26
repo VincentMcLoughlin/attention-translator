@@ -1,5 +1,4 @@
 import numpy as np
-import typing
 from typing import Any, Tuple
 import tensorflow as tf
 import tensorflow_text as tf_text
@@ -31,9 +30,13 @@ def plot_attention(attention, sentence, predicted_sentence):
   plt.suptitle('Attention weights')
   plt.show()
 
-reloaded = tf.saved_model.load('train_split_translators\deu_eng_50k_1k_1layers_10_epochs')
+user_input = str(sys.argv[2])
+use_attention = int(sys.argv[1])
 
-user_input = str(sys.argv[1])
+if use_attention==0:
+  reloaded = tf.saved_model.load('train_split_translators\deu_eng_50k_1k_1layers_10_epochs')
+else:
+  reloaded = tf.saved_model.load('train_split_translators\deu_eng_50k_1k_1layers_10_epochs')
 
 if user_input[-2:] != " ." and user_input[-1:] != ".":
   user_input += " ."
@@ -49,5 +52,5 @@ for tr in result['text']:
   print(f"OUTPUT: \n {tr.numpy().decode()}\n")
 
 i=0
-plot_attention(result['attention'][i], input_text[i], result['text'][i])
-print()
+if use_attention:
+  plot_attention(result['attention'][i], input_text[i], result['text'][i])
