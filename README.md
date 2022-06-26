@@ -64,6 +64,14 @@ The code is currently set up to use the same training parameters mentioned in th
 
 It takes about 10 minutes on my RTX 3070 GPU to create the input and output text processors and after that each training run is about 25 minutes.
 
-## Calculating the BLEU score
+## Get BLEU Score
+To get the bleu score you can use the following scripts
 
+```
+python get_translator_bleu_score_manythings.py 1
+python get_translator_bleu_score_manythings.py 0
+python get_translator_bleu_score_newstest.py 1
+python get_translator_bleu_score_newstest.py 0
+```
 
+Once again, the 1 parameter indicates the attention model, while the 0 parameter is the non-attentional model. The scripts print out each of the input, the reference, and the output sentence block.
