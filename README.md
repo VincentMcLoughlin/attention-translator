@@ -63,7 +63,3 @@ python main.py
 The code is currently set up to use the same training parameters mentioned in the paper. Specifically, it is a 10 epoch run, with 1 1000 node GRU layer in both the encoder and decoder. It uses a vocabulary size of 50,000 and an embedding dimension size of 1000 with a batch size of 128. All of these parameters can be changed from the top of main.py if so desired. It uses the deu-eng/deu_train.txt as the training dataset.
 
 It takes about 10 minutes on my RTX 3070 GPU to create the input and output text processors and after that each training run is about 25 minutes.
-
-## Calculating the BLEU score
-
-
