@@ -63,3 +63,15 @@ python main.py
 The code is currently set up to use the same training parameters mentioned in the paper. Specifically, it is a 10 epoch run, with 1 1000 node GRU layer in both the encoder and decoder. It uses a vocabulary size of 50,000 and an embedding dimension size of 1000 with a batch size of 128. All of these parameters can be changed from the top of main.py if so desired. It uses the deu-eng/deu_train.txt as the training dataset.
 
 It takes about 10 minutes on my RTX 3070 GPU to create the input and output text processors and after that each training run is about 25 minutes.
+
+## Get BLEU Score
+To get the bleu score you can use the following scripts
+
+```
+python get_translator_bleu_score_manythings.py 1
+python get_translator_bleu_score_manythings.py 0
+python get_translator_bleu_score_newstest.py 1
+python get_translator_bleu_score_newstest.py 0
+```
+
+Once again, the 1 parameter indicates the attention model, while the 0 parameter is the non-attentional model.
