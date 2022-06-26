@@ -4,7 +4,19 @@ Translator that translates from German to English using TensorFlow's additive at
 
 ## Demo
 
-To demo the code, first you will need to create a virtual environment and install the relevant packages from requirements.txt. You can install the packages using:
+To demo the code, first you will need to create a virtual environment and install the relevant packages from requirements.txt. To create a venv use
+
+```
+python -m venv venv
+```
+
+Then run the following command to activate it.
+
+```
+python venv/Scripts/activate
+```
+
+You can install the packages using:
 
 ```
 pip install -r requirements
@@ -16,7 +28,7 @@ in git bash (if you are using windows) or linux systems. Equivalent powershell c
 
 To demo the code, use python German_to_English_Translate_and_Plot.py. This will use our attention translator and plot the attention weights for the source and target sentence.
 
-NOTE: Performance is better when the sentence is formatted as shown in the example, with a space before the period.
+NOTE: Results differ between runs, so try multiple runs to evaluate the performance. Performance is better when the sentence is formatted as shown in the example, with a space before the period.
 
 For example 
 
