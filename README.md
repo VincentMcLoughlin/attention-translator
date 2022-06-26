@@ -74,4 +74,4 @@ python get_translator_bleu_score_newstest.py 1
 python get_translator_bleu_score_newstest.py 0
 ```
 
-Once again, the 1 parameter indicates the attention model, while the 0 parameter is the non-attentional model.
+Once again, the 1 parameter indicates the attention model, while the 0 parameter is the non-attentional model. The scripts print out each of the input, the reference, and the output sentence block.
