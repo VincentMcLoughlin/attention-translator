@@ -37,7 +37,6 @@ class TrainTranslator(tf.keras.Model):
                 # 2. The target for the decoder's next prediction
                 new_tokens = target_tokens[:, t:t+2]                
                 step_loss, dec_state = self._loop_step(new_tokens, input_mask, enc_output, dec_state)
-
                 loss = loss+step_loss
 
             #Average loss over all non padding tokens
@@ -60,7 +59,6 @@ class TrainTranslator(tf.keras.Model):
         #Convert the text to tokens
         input_tokens = self.input_text_processor(input_text)
         target_tokens = self.output_text_processor(target_text)        
-
         #Convert IDs to masks
         input_mask = input_tokens != 0        
         target_mask = target_tokens != 0        

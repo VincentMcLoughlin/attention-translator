@@ -1,4 +1,3 @@
-from unittest import result
 import tensorflow as tf
 import numpy as np
 from Decoder import Decoder, DecoderInput
@@ -54,8 +53,7 @@ class Translator(tf.Module):
     @tf.function(input_signature=[tf.TensorSpec(dtype=tf.string, shape=[None])])
     def tf_translate(self, input_text):
         return self.translate(input_text)
-
-    #translate_unrolled
+    
     def translate(self, input_text, *, max_length=50, return_attention=True, temperature=1.0):
 
         batch_size = tf.shape(input_text)[0]
