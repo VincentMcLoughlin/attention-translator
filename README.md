@@ -16,7 +16,7 @@ Then run the following command to activate it.
 python venv/Scripts/activate
 ```
 
-You can install the packages using:
+You can then install the packages using:
 
 ```
 pip install -r requirements
@@ -25,8 +25,9 @@ pip install -r requirements
 
 in git bash (if you are using windows) or linux systems. Equivalent powershell commands should also work.
 
+For this code we are using TensorFlow 2.8.0 and CudNN 2.1.
 
-To demo the code, use python German_to_English_Translate_and_Plot.py. This will use our attention translator and plot the attention weights for the source and target sentence.
+To run a translation example, use German_to_English_Translate_and_Plot.py. This will use our attention translator and plot the attention weights for the source and target sentence.
 
 NOTE: Results differ between runs, so try multiple runs to evaluate the performance. Performance is better when the sentence is formatted as shown in the example, with a space before the period.
 
@@ -37,7 +38,7 @@ python German_to_English_Translate_and_Plot.py 1 "Sie können mein Haus von hier
 python German_to_English_Translate_and_Plot.py 0 "Sie können mein Haus von hier nicht sehen ."
 ```
 
-Using the 1 parameter runs the translation using our attention model located in train_split_translators\deu_eng_50k_1k_1layers_10_epochs. Using the 0 parameter runs the translation using our non-attentional mode located in train_split_translators\deu_eng_50k_1k_1layers_10_epochs_no_attention.
+Using the 1 parameter runs the translation using our attention model located in train_split_translators\deu_eng_50k_1k_1layers_10_epochs. Using the 0 parameter runs the translation using our non-attentional mode located in train_split_translators\deu_eng_50k_1k_1layers_10_epochs_no_attention and does not print an attentional map.
 
 Example sentences can be found in our validation data set, which is located in deu-eng/deu_val.txt. The newstest2014 validation set was also used to validate our network, and can be found in the test_data/newstest2014_deu.txt and test_data/newstest2014_eng.txt. See the following web pages for the source of the newstest2014 dataset, which also contains more datasets if required.
 
@@ -51,7 +52,7 @@ The data used in our training and validation datasets are included as part of th
 
 http://www.manythings.org/bilingual/
 
-Our translation models can be found in the train_split_translators folder and are labeled clearly.
+Our translation models can be found in the train_split_translators folder.
 
 
 ## Run Training
